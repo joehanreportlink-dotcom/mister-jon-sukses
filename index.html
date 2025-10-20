@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aku Mister Jon Sukses 💪</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --accent: #38bdf8;
+      --error: #ef4444;
+      --correct: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: var(--accent);
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+    }
+
+    #container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 16px;
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+    }
+
+    input[type="text"] {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid var(--muted);
+      color: var(--text);
+      font-size: 1.3rem;
+      padding: 10px;
+      width: 60%;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    #wordArea {
+      font-size: 2rem;
+      margin: 20px 0;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px 25px;
+      border-radius: 12px;
+      letter-spacing: 1px;
+      display: inline-block;
+    }
+
+    span.active {
+      background-color: var(--accent);
+      color: var(--bg);
+      padding: 0 5px;
+      border-radius: 6px;
+    }
+
+    #motivation {
+      margin-top: 10px;
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    #timer {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    #stats {
+      margin-top: 20px;
+      font-size: 1.1rem;
+    }
+
+    #best {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: var(--correct);
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      background-color: var(--accent);
+      color: var(--bg);
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      background-color: #0ea5e9;
+      transform: scale(1.03);
+    }
+
+    footer {
+      position: absolute;
+      bottom: 10px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 Aku Mister Jon Sukses 🌟</h1>
+  <div id="container">
+    <input type="text" id="nameInput" placeholder="Masukkan nama kamu...">
+    
+    <div id="wordArea"></div>
+    <input type="text" id="input" placeholder="Ketik di sini..." disabled>
+
+    <div id="motivation">✨ Sukses dimulai dari satu huruf pertama.</div>
+    <div id="timer">Waktu: 60 detik</div>
+
+    <div id="stats">WPM: 0 | Akurasi: 0%</div>
+    <div id="best">🏆 Skor terbaik: 0 WPM</div>
+
+    <button id="start">Mulai</button>
+    <button id="reset">Ulangi</button>
+  </div>
+  <footer>© 2025 Aku Mister Jon Sukses 💪 — Latihan Mengetik Hebat</footer>
+
+  <script>
+    const words = [
+      "aku","kamu","kita","sukses","cepat","fokus","hebat","menang","percaya",
+      "berani","latihan","mister","jon","semangat","usaha","tujuan","nyata",
+      "disiplin","terus","maju","pantang","menyerah","jari","hebat"
+    ];
+
+    const motivations = [
+      "💪 Fokus dulu, kecepatan akan menyusul.",
+      "🔥 Satu kata lagi menuju sukses!",
+      "⚡ Jangan berhenti — sukses di depan mata.",
+      "🌟 Aku Mister Jon Sukses — dan kamu juga bisa!",
+      "✨ Disiplin kecil setiap hari = hasil besar."
+    ];
+
+    const input = document.getElementById("input");
+    const wordArea = document.getElementById("wordArea");
+    const timerEl = document.getElementById("timer");
+    const resetBtn = document.getElementById("reset");
+    const startBtn = document.getElementById("start");
+    const stats = document.getElementById("stats");
+    const motivationEl = document.getElementById("motivation");
+    const bestEl = document.getElementById("best");
+    const nameInput = document.getElementById("nameInput");
+
+    let timeLeft = 60, interval, motivationTimer, currentIndex = 0;
+    let correct = 0, total = 0, startTime, started = false;
+    let playerName = localStorage.getItem("playerName") || "";
+    let bestScore = localStorage.getItem("bestWPM") || 0;
+
+    nameInput.value = playerName;
+    bestEl.textContent = `🏆 Skor terbaik: ${bestScore} WPM`;
+
+    function renderWords() {
+      wordArea.innerHTML = words.map((w, i) =>
+        `<span class="${i === 0 ? 'active' : ''}">${w}</span>`
+      ).join(" ");
+    }
+
+    function updateTimer() {
+      timerEl.textContent = `Waktu: ${timeLeft} detik`;
+    }
+
+    function startSession() {
+      if (started) return;
+      started = true;
+      playerName = nameInput.value.trim() || "Pemain";
+      localStorage.setItem("playerName", playerName);
+      correct = 0; total = 0; timeLeft = 60; currentIndex = 0;
+      renderWords();
+      input.disabled = false;
+      input.focus();
+      startTime = Date.now();
+
+      interval = setInterval(() => {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft <= 0) endSession();
+      }, 1000);
+
+      motivationTimer = setInterval(() => {
+        const text = motivations[Math.floor(Math.random() * motivations.length)];
+        motivationEl.textContent = text;
+      }, 4000);
+    }
+
+    function endSession() {
+      clearInterval(interval);
+      clearInterval(motivationTimer);
+      input.disabled = true;
+      started = false;
+      const wpm = Math.round((correct / 5) / ((Date.now() - startTime) / 60000));
+      const acc = total > 0 ? Math.round((correct / total) * 100) : 100;
+      stats.textContent = `WPM: ${wpm} | Akurasi: ${acc}%`;
+      motivationEl.textContent = `✨ Hebat ${playerName}! Skor kamu: ${wpm} WPM`;
+
+      if (wpm > bestScore) {
+        bestScore = wpm;
+        localStorage.setItem("bestWPM", bestScore);
+        bestEl.textContent = `🏆 Skor terbaik: ${bestScore} WPM 🎉`;
+      }
+    }
+
+    function resetSession() {
+      clearInterval(interval);
+      clearInterval(motivationTimer);
+      input.value = "";
+      input.disabled = true;
+      started = false;
+      timeLeft = 60;
+      updateTimer();
+      motivationEl.textContent = "✨ Siap mengetik lagi?";
+      stats.textContent = "WPM: 0 | Akurasi: 0%";
+      renderWords();
+    }
+
+    input.addEventListener("input", () => {
+      const currentWord = words[currentIndex];
+      const typed = input.value.trim();
+      const currentSpan = wordArea.querySelectorAll("span")[currentIndex];
+
+      // Salah → merah
+      if (!currentWord.startsWith(typed)) {
+        currentSpan.style.backgroundColor = "#ef4444";
+        currentSpan.style.color = "white";
+      } else {
+        currentSpan.style.backgroundColor = "var(--accent)";
+        currentSpan.style.color = "var(--bg)";
+      }
+
+      if (typed === currentWord) {
+        correct += currentWord.length;
+        total += currentWord.length;
+        currentIndex++;
+        if (currentIndex >= words.length) currentIndex = 0;
+        renderWords();
+        wordArea.querySelectorAll("span")[currentIndex].classList.add("active");
+        input.value = "";
+      } else {
+        total++;
+      }
+    });
+
+    resetBtn.addEventListener("click", resetSession);
+    startBtn.addEventListener("click", startSession);
+
+    renderWords();
+    updateTimer();
+  </script>
+</body>
+</html>
